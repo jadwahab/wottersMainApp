@@ -3,12 +3,13 @@
 import React, { Component } from 'react'
 import './imageUpload.css'
 
-var azure = require('azure-storage');
-// const accountName = 'wotters'
-// const accountKey = 'se=2099-01-01&sp=rwdlac&sv=2018-03-28&ss=b&srt=sco&sig=Tre0bT/ks8SP01B7KAigI1dh5w9RYShUniIzW0HnadI%3D'
+var azure = require('azure-storage')
+// var blobService = azure.createBlobService();
+const accountName = 'wotters'
+const accountKey = 'c2U9MjA5OS0wMS0wMSZzcD1yd2RsYWMmc3Y9MjAxOC0wMy0yOCZzcz1iJnNydD1zY28mc2lnPVRyZTBiVC9rczhTUDAxQjdLQWlnSTFkaDV3OVJZU2hVbmlJelcwSG5hZEklM0Q='
 // const accountKey = ''
 
-// var blobService = azure.createBlobService(accountName, accountKey);
+var blobService = azure.createBlobService(accountName, accountKey);
 
 class ViewUpload extends Component {
     constructor(){
@@ -24,14 +25,14 @@ class ViewUpload extends Component {
 
     readURL (image) {
         console.log(image)
-        // blobService.createContainerIfNotExists('taskcontainer', {
-        //     publicAccessLevel: 'blob'
-        //   }, function(error, result, response) {
-        //     if (!error) {
-        //       // if result = true, container was created.
-        //       // if result = false, container already existed.
-        //     }
-        //   });
+        
+        blobService.createBlockBlobFromLocalFile('fileinput', 'taskblob', 'task1-upload.jpg', function(error, result, response) {
+            console.log(result)
+            if (!error) {
+                console.log(error)
+              // file uploaded
+            }
+          });
 
         console.log(image)
     }
@@ -55,7 +56,7 @@ class ViewUpload extends Component {
             <div className="file-upload">
             {/* <button className="file-add-btn" type="button" >Add Image</button> */}
             <div className="image-upload-wrap">
-                <input id="fileinput" className="file-upload-input" type="file" onChange={(image) => this.readURL(image)} accept="image/*" />
+                <input id="fileinput" className="file-upload-input" type="file" onChange={(image) => this.readURL(image.target.files[0])} accept="image/*" />
                 <div className="drag-text">
                 <h3>Drag and drop a file or select add Image</h3>
                 </div>
