@@ -1,6 +1,5 @@
 import React, { Component } from "react";
 import fetch from 'isomorphic-fetch';
-import logo from "./logo.png";
 
 import "./App.css";
 
@@ -44,6 +43,19 @@ const getWOTTxs = async () => {
     return null;
   }
 };
+
+// const getWOTTxs = async (CID) => {
+//   try {
+//     let response = await fetch(`https://api.blockchair.com/bitcoin-cash/outputs?q=script_hex(^6a0400574f54${CID})#`);
+//     response = await response.json();
+//     // console.log(response);
+//     return response;
+//   } catch (err) {
+//     console.log(err);
+//     console.warn(`Call to API was unsuccessful`);
+//     return null;
+//   }
+// };
 
 
 class App extends Component {
@@ -110,17 +122,16 @@ class App extends Component {
 
               let prefix = Buffer.from('00574f54', 'hex');
 
-              // for some reason CID can't be less than 16
-              // if (CID < 16) {
-                
-              // } else {
-                
-              // }
-              let CID = parseInt(this.state.value).toString(16);
-              console.log("CID")
-              console.log(typeof CID)
-              let buffCID = Buffer.from(CID, 'hex');
-              console.log(buffCID)
+              let CID, buffCID;
+              // for some reason CID can't be less than 16 or else becomes undefined
+              if (this.state.value < 16) {
+                console.log(this.state.value)
+                CID = this.state.value
+                buffCID = new Buffer (CID);
+              } else {
+                CID = parseInt(this.state.value).toString(16);
+                buffCID = Buffer.from(CID, 'hex');
+              }
 
               // create array w/ OP_RETURN code and text buffer and encode
               let data = BITBOX.Script.encode([
@@ -177,12 +188,16 @@ class App extends Component {
               }
               console.log(addresses);
           }
-      )
-      .catch(
-          (error) => {
-              console.log(error); //Exepection error....
-          }
-      )
+      ).then(function() {
+        getWOTTxs().then(function(result){
+          console.log(result.data);
+        })
+      })
+      // .catch(
+      //     (error) => {
+      //         console.log(error); //Exepection error....
+      //     }
+      // )
     }
 
   async componentDidMount() {
@@ -194,8 +209,6 @@ class App extends Component {
         // console.log(result);
         // return false;
 
-        
-        // await this.getImageHash(result)
       },
       err => {
         console.log(err);
