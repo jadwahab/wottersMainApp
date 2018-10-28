@@ -67,6 +67,8 @@ class ViewImages extends Component {
       ]
   }
 
+
+
   onYes() {
     console.log('click yes')
   }
@@ -79,45 +81,50 @@ class ViewImages extends Component {
     const { items } = this.state
     // console.log(items)
     return (
-      <StackGrid
-        columnWidth={300}
-        appear={scaleDown.appear}
-        appeared={scaleDown.appeared}
-        enter={scaleDown.enter}
-        entered={scaleDown.entered}
-        leaved={scaleDown.leaved}
-      >
-      {
-        items.map(({ hash, pubKey, assignment,prevHash, imageHash, timeStamp }) => {
-          return (
-            // <Row>
-            //   <Col >
-            
-              <div onClick={() => {
-                console.log('you click')
-                this.setState({
-                  items: items.map(o => ({
-                    ...o,
-                    active: o.hash === hash ? !o.active : o.active,
-                  })),
-                });
-              }}  key={hash} style={{marginButton: '2%'}} className="boxes">
-              <div className="card" style={{width: '18rem'}}>
-                <img className="card-img-top" src={`https://wotters.blob.core.windows.net/images/${imageHash}.jpg`} alt="Card image cap" />
-                <div className="card-body">
-                  <h5 className="card-title">Challenge</h5>
-                  <p className="card-text">{assignment}</p>
-                  <Button block onClick={() => this.onYes()} style={{marginRight: '30px'}} color="success">Yes</Button> 
-                  <Button block onClick={() => this.onNo()} color="danger">No</Button>
+      <div className="App">
+        <header className="App-header">
+          <h1 className="App-title">FIRST CHALLENGE</h1>
+        </header>
+        <StackGrid
+          columnWidth={300}
+          appear={scaleDown.appear}
+          appeared={scaleDown.appeared}
+          enter={scaleDown.enter}
+          entered={scaleDown.entered}
+          leaved={scaleDown.leaved}
+        >
+        {
+          items.map(({ hash, pubKey, assignment,prevHash, imageHash, timeStamp }) => {
+            return (
+              // <Row>
+              //   <Col >
+              
+                <div onClick={() => {
+                  console.log('you click')
+                  this.setState({
+                    items: items.map(o => ({
+                      ...o,
+                      active: o.hash === hash ? !o.active : o.active,
+                    })),
+                  });
+                }}  key={hash} style={{marginButton: '2%'}} className="boxes">
+                <div className="card" style={{width: '18rem'}}>
+                  <img className="card-img-top" src={`https://wotters.blob.core.windows.net/images/${imageHash}.jpg`} alt="Card image cap" />
+                  <div className="card-body">
+                    <h5 className="card-title">Challenge</h5>
+                    <p className="card-text">{assignment}</p>
+                    <Button block onClick={() => this.onYes()} style={{marginRight: '30px'}} color="success">Yes</Button> 
+                    <Button block onClick={() => this.onNo()} color="danger">No</Button>
+                  </div>
                 </div>
               </div>
-            </div>
-          //   </Col>
-          // </Row>
-          )
-        })
-      }   
-      </StackGrid>
+            //   </Col>
+            // </Row>
+            )
+          })
+        }   
+        </StackGrid>
+      </div>
     );
   }
 }
