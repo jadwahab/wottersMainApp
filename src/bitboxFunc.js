@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import fetch from 'isomorphic-fetch';
+import { updateChallenge } from './Assignment';
 
 import "./App.css";
 
@@ -31,6 +32,18 @@ let change = BITBOX.HDNode.derivePath(account, "0/0");
 // get the cash address
 let cashAddress = BITBOX.HDNode.toCashAddress(change);
 
+String.prototype.hexEncode = function(){
+  var hex, i;
+
+  var result = "";
+  for (i=0; i<this.length; i++) {
+      hex = this.charCodeAt(i).toString(16);
+      result += ("000"+hex).slice(-4);
+  }
+
+  return result
+}
+
 
 class App extends Component {
   constructor(props) {
@@ -42,7 +55,8 @@ class App extends Component {
       hex: "",
       txid: "",
       imageHash: "",
-      result: [{},{}]
+      result: [{},{}],
+      challenge: ""
     };
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
@@ -136,6 +150,13 @@ class App extends Component {
             let buffImgHex = cID+h+response;
 
               let imageHash = BITBOX.Crypto.ripemd160(buffImgHex);
+              console.log(imageHash.toString().hexEncode());
+
+              // GET CHALLENGE
+              let challenge = updateChallenge(imageHash.toString().hexEncode(), 1);
+
+              this.setState({ challenge }); 
+
               let buff = Buffer.from(imageHash);
 
               for (let index = 0; index < buff.length; index++) {
@@ -314,12 +335,10 @@ class App extends Component {
           <p>{this.state.txid}</p>
 
           <h3>List of WOT transactions:</h3>
-          {/* {this.state.result.map((list) => {
-          return (
-              <p>{list.block_id}</p>
-            )
-          })} */}
           {this.result()}
+
+          <h3>CHALLENGE:</h3>
+          <p>{this.state.challenge}</p>
          
         </div>
       </div>
