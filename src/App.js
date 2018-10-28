@@ -17,7 +17,7 @@ const Users = () => <Bitbox />;
 const AppRouter = () => (
   <Router>
     <div>
-      <nav>
+      {/* <nav pills>
         <ul>
           <li>
             <Link to="/">Home</Link>
@@ -29,7 +29,7 @@ const AppRouter = () => (
             <Link to="/users/">Users</Link>
           </li>
         </ul>
-      </nav>
+      </nav> */}
 
       <Route path="/" exact component={Index} />
       <Route path="/about/" component={About} />

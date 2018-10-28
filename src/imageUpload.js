@@ -1,16 +1,23 @@
-
-
 import React, { Component } from 'react'
 import './imageUpload.css'
 import { Row, Col } from 'reactstrap';
-import AzureStorage from './libs/azure'
+import { Base64 } from 'js-base64';
+import {createBlobServiceWithSas} from './libs/azure'
+const image2base64 = require('image-to-base64');
 
-// var azure = require('azure-storage')
-// var blobService = azure.createBlobService();
-// const accountName = 'wotters'
-// const accountKey = 'c2U9MjA5OS0wMS0wMSZzcD1yd2RsYWMmc3Y9MjAxOC0wMy0yOCZzcz1iJnNydD1zY28mc2lnPVRyZTBiVC9rczhTUDAxQjdLQWlnSTFkaDV3OVJZU2hVbmlJelcwSG5hZEklM0Q='
 
-// var blobService = azure.createBlobService(accountName, accountKey);
+const account = {
+    name: "wotters",
+    sas:  "se=2099-01-01&sp=rwdlac&sv=2018-03-28&ss=b&srt=sco&sig=Tre0bT/ks8SP01B7KAigI1dh5w9RYShUniIzW0HnadI%3D"
+};
+
+let BITBOXSDK = require("bitbox-sdk/lib/bitbox-sdk").default;
+let BITBOX = new BITBOXSDK({
+  // restURL: 'https://rest.bitcoin.com/v1/' // -> change to mainnet
+  restURL: 'https://trest.bitcoin.com/v1/'
+});
+
+
 
 class ViewUpload extends Component {
     constructor(){
@@ -21,50 +28,44 @@ class ViewUpload extends Component {
     }
 
     removeUpload() {
-
     }
 
-    readURL (file) {
-        // blobService.createAppendBlobFromText('json', 'test', '{ "test": true }', (error, result) => {
-        //     if(error) {
-        //     // Handle blob error
-        //     } else {
-        //     console.log('Upload is successful');
-        //     }});
-
+    async readURL (file) {
         // console.log(file)
-        // const account = {
-        //     name: "wotters",
-        //     sas:  "se=2099-01-01&sp=rwdlac&sv=2018-03-28&ss=b&srt=sco&sig=Tre0bT/ks8SP01B7KAigI1dh5w9RYShUniIzW0HnadI%3D"
-        // };
-        // const blobUri = 'https://' + account.name + '.blob.core.windows.net';
-        // const blobService = AzureStorage.Blob.createBlobServiceWithSas(blobUri, account.sas);
+        let url = URL.createObjectURL(file)
+        const blobUri = 'https://' + account.name + '.blob.core.windows.net';
+        const blobService = createBlobServiceWithSas(blobUri, account.sas);
 
-        // blobService.createBlockBlobFromBrowserFile('images', 
-        // file.name, 
-        // file, 
-        // (error, result) => {
-        //     if(error) {
-        //         // Handle blob error
-        //     } else {
-        //         console.log('Upload is successful');
-        //     }
-        // });
-        // fs.writeFile('test.jpg', image, (err) => {  
-        //     // throws an error, you could also catch it here
-        //     if (err) throw err;
+        var reader = new FileReader();
         
-        //     // success case, the file was saved
-        //     console.log('Lyric saved!');
-        // });
-        // blobService.createBlockBlobFromLocalFile('fileinput', 'taskblob', 'task1-upload.jpg', function(error, result, response) {
-        //     console.log(result)
-        //     if (!error) {
-        //         console.log(error)
-        //       // file uploaded
-        //     }
-        //   });
+        reader.onload = function() {
+            var arrayBuffer = this.result,
+            array = new Uint8Array(arrayBuffer),
+            binaryString = String.fromCharCode.apply(null, array);
 
+            //console.log("binaryString:" + binaryString);
+
+            console.log("content hash:" + BITBOX.Crypto.sha256(binaryString));
+            console.log("file hash:" + BITBOX.Crypto.sha256(file));
+
+            console.log("content hash 2:" + BITBOX.Crypto.sha256(binaryString));
+            console.log("file hash 2:" + BITBOX.Crypto.sha256(file));    
+            // const hashedName = `${BITBOX.Crypto.sha256(file)}`
+            const base64FileString = Base64.encode(binaryString)
+            const base64FileName = Base64.encode(BITBOX.Crypto.sha256(file))
+            
+            // console.log(hashedName)
+            console.log(base64FileString)
+            blobService.createAppendBlobFromText('json', base64FileName, base64FileString, (error, result) => {
+                if(error) {
+                // Handle blob error
+                } else {
+                console.log('Upload is successful');
+                window.open('/', '_self')
+            }});
+        }
+        reader.readAsArrayBuffer(file);
+ 
     }
 
     onClick() {
@@ -76,7 +77,6 @@ class ViewUpload extends Component {
     }
     
   render() {
-
     return (
         <div>
             <title>W3.CSS Template</title>
@@ -114,9 +114,9 @@ class ViewUpload extends Component {
                 </label>
             </div>
             </div>    
-            <div className="file-list">
+            {/* <div className="file-list">
             <button className="file-upload-btn" type=" button" id="list-button" style={{marginTop: 20}}>List</button>
-            </div>
+            </div> */}
             <div id="list_images" />
 
 

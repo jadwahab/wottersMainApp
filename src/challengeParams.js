@@ -10,7 +10,7 @@ export function getChallenge(hashedValue) {
 	// "hair",
 	// "scarf",
 	// "underwear",
-
+	
 	// return JSON object
 };
 

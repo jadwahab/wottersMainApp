@@ -67,8 +67,6 @@ class ViewImages extends Component {
       ]
   }
 
-
-
   onYes() {
     console.log('click yes')
   }
@@ -92,6 +90,7 @@ class ViewImages extends Component {
         >
         {
           items.map(({ hash, pubKey, assignment,prevHash, imageHash, timeStamp }) => {
+            const status = {display: 'none'} 
             return (
               // <Row>
               //   <Col >
@@ -104,7 +103,7 @@ class ViewImages extends Component {
                       active: o.hash === hash ? !o.active : o.active,
                     })),
                   });
-                }}  key={hash} style={{marginButton: '2%'}} className="boxes">
+                }}  key={hash} style={{marginButton: '2%', status}} className="boxes">
                 <div className="card" style={{width: '18rem'}}>
                   <img className="card-img-top" src={`https://wotters.blob.core.windows.net/images/${imageHash}.jpg`} alt="Card image cap" />
                   <div className="card-body">
