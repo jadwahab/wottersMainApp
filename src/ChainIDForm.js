@@ -1,8 +1,4 @@
-import React, { Component } from "react";
-import fetch from 'isomorphic-fetch';
-import logo from "./logo.png";
-
-import "./App.css";
+import React from 'react';
 
 const image2base64 = require('image-to-base64');
 
@@ -32,37 +28,22 @@ let change = BITBOX.HDNode.derivePath(account, "0/0");
 // get the cash address
 let cashAddress = BITBOX.HDNode.toCashAddress(change);
 
-const getWOTTxs = async () => {
-  try {
-    let response = await fetch(`https://api.blockchair.com/bitcoin-cash/outputs?q=script_hex(^6a0400574f54)#`);
-    response = await response.json();
-    // console.log(response);
-    return response;
-  } catch (err) {
-    console.log(err);
-    console.warn(`Call to API was unsuccessful`);
-    return null;
-  }
-};
-
-
-class App extends Component {
+class ChainIDForm extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      value: '',
-      mnemonic: mnemonic,
-      hex: "",
-      txid: "",
-      imageHash: ""
+        value: '',
+        mnemonic: mnemonic,
+        hex: "",
+        txid: "",
+        imageHash: ""
     };
-    
+
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
   }
-  
 
-  async getImageHash(result) {
+  async getImageHash(result, cID) {
     // instance of transaction builder
     // let transactionBuilder = new BITBOX.TransactionBuilder("bitcoincash"); // -> change to mainnet
     let transactionBuilder = new BITBOX.TransactionBuilder("testnet");
@@ -108,18 +89,15 @@ class App extends Component {
                 imageHash: buffHex
               });
 
+              console.log("ASDASDADA")
+              console.log(typeof parseInt(cID))
+              console.log(typeof parseInt(cID).toString(16))
+              
               let prefix = Buffer.from('00574f54', 'hex');
-
-              // for some reason CID can't be less than 16
-              // if (CID < 16) {
-                
-              // } else {
-                
-              // }
-              let CID = parseInt(this.state.value).toString(16);
-              console.log("CID")
-              console.log(typeof CID)
-              let buffCID = Buffer.from(CID, 'hex');
+              
+              let buffCID = new Buffer(parseInt(cID).toString(16), 'hex');
+              
+              console.log("ASDASDADA")
               console.log(buffCID)
 
               // create array w/ OP_RETURN code and text buffer and encode
@@ -129,7 +107,6 @@ class App extends Component {
               buffCID,
               buff
               ])
-
               // add encoded data as output and send 0 satoshis
               transactionBuilder.addOutput(data, 0);
               transactionBuilder.addOutput(cashAddress, sendAmount);
@@ -176,6 +153,12 @@ class App extends Component {
                 addresses.push(BITBOX.HDNode.toCashAddress(account));
               }
               console.log(addresses);
+
+              console.log('image hash');
+              console.log(this.state.imageHash);
+              
+              console.log('txid');
+              console.log(this.state.txid);
           }
       )
       .catch(
@@ -184,24 +167,6 @@ class App extends Component {
           }
       )
     }
-
-  async componentDidMount() {
-    BITBOX.Address.utxo(cashAddress).then(
-      async (result) => {
-        if (!result[0]) {
-          return;
-        }
-        // console.log(result);
-        // return false;
-
-        
-        // await this.getImageHash(result)
-      },
-      err => {
-        console.log(err);
-      }
-    );
-  }
 
   handleChange(event) {
     this.setState({value: event.target.value});
@@ -226,33 +191,15 @@ class App extends Component {
 
   render() {
     return (
-      <div className="App">
-        <header className="App-header">
-          <h1 className="App-title">WOTTERS</h1>
-        </header>
-        <div className="App-content">
-          <form onSubmit={this.handleSubmit}>
-            <label>
-              ChainID:
-              <input type="text" value={this.state.value} onChange={this.handleChange} />
-            </label>
-            <input type="submit" value="Submit" />
-          </form>
-          <h2>BIP44 $BCH Wallet</h2>
-          <h3>256 bit BIP39 Mnemonic:</h3> <p>{this.state.mnemonic}</p>
-
-          <h3>Output image hash in hex</h3>
-          <p>{this.state.imageHash}</p>
-
-          {/* <h3>Output transaction raw hex</h3>
-          <p>{this.state.hex}</p> */}
-
-          <h3>Output transaction ID</h3>
-          <p>{this.state.txid}</p>
-        </div>
-      </div>
+      <form onSubmit={this.handleSubmit}>
+        <label>
+          ChainID:
+          <input type="text" value={this.state.value} onChange={this.handleChange} />
+        </label>
+        <input type="submit" value="Submit" />
+      </form>
     );
   }
 }
 
-export default App;
+export default ChainIDForm;

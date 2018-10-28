@@ -1,3 +1,19 @@
+
+export function getChallenge(hashedValue) {
+	// "shirt", // 4 bits each
+	// "hat",
+	// "jacket",
+	// "pants",
+	// "socks",
+	// "shoes",
+	// "glasses",
+	// "hair",
+	// "scarf",
+	// "underwear",
+
+	// return JSON object
+};
+
 // 2^4 = 16 choices
 export const colors = [
 	"dark",
@@ -17,7 +33,6 @@ export const colors = [
 	"transparent",
 	"multi"
 ];
-
 
 export const  categories = [
 	"shirt",

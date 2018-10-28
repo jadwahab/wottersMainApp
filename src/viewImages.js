@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import 'bootstrap/dist/css/bootstrap.css';
 import { Button, Container, Row, Col } from 'reactstrap';
 import StackGrid, { transitions } from "react-stack-grid";
+import ChainIDForm from './ChainIDForm';
 // import fetch from 'node-fetch'
 const { scaleDown } = transitions;
 
@@ -82,9 +83,7 @@ class ViewImages extends Component {
     // console.log(items)
     return (
       <div className="App">
-        <header className="App-header">
-          <h1 className="App-title">FIRST CHALLENGE</h1>
-        </header>
+        <ChainIDForm />
         <StackGrid
           columnWidth={300}
           appear={scaleDown.appear}
