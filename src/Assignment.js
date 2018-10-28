@@ -111,8 +111,6 @@ class Assignment {
     	let color = ""
     	let challenge = this.getGesture(parseInt(hash.substring(0,2), 16) % difficultyModulo);
     	
-    	
-    	
     	var i;    	
     	for(i = 0; (i < difficulty) && (i < symbols.length); i++) {
     		color	= this.getColor(parseInt(hash[2 * i], 16) % colors.length);

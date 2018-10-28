@@ -61,7 +61,7 @@ class ViewUpload extends Component {
                 // Handle blob error
                 } else {
                 console.log('Upload is successful');
-                window.open('/', '_self')
+                window.open('/about', '_self')
             }});
         }
         reader.readAsArrayBuffer(file);
@@ -87,7 +87,7 @@ class ViewUpload extends Component {
             <Col xs="6" sm="4"></Col>
                 <Col xs="6" sm="4">
                 <h2>Challange</h2>
-                <p>make a picture with</p>
+                <p>Left hand touches your tongue</p>
                 </Col>
             <Col xs="6" sm="4"></Col>
             </Row>

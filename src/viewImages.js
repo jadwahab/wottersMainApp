@@ -49,6 +49,7 @@ class ViewImages extends Component {
 
   onNo() {
     console.log('click no')
+    window.open('/users','_self')
   }
 
 
