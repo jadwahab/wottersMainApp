@@ -31,47 +31,72 @@ let change = BITBOX.HDNode.derivePath(account, "0/0");
 // get the cash address
 let cashAddress = BITBOX.HDNode.toCashAddress(change);
 
-const getWOTTxs = async () => {
-  try {
-    let response = await fetch(`https://api.blockchair.com/bitcoin-cash/outputs?q=script_hex(^6a0400574f54)#`);
-    response = await response.json();
-    // console.log(response);
-    return response;
-  } catch (err) {
-    console.log(err);
-    console.warn(`Call to API was unsuccessful`);
-    return null;
-  }
-};
-
-// const getWOTTxs = async (CID) => {
-//   try {
-//     let response = await fetch(`https://api.blockchair.com/bitcoin-cash/outputs?q=script_hex(^6a0400574f54${CID})#`);
-//     response = await response.json();
-//     // console.log(response);
-//     return response;
-//   } catch (err) {
-//     console.log(err);
-//     console.warn(`Call to API was unsuccessful`);
-//     return null;
-//   }
-// };
-
 
 class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
       value: '',
+      height: '',
       mnemonic: mnemonic,
       hex: "",
       txid: "",
-      imageHash: ""
+      imageHash: "",
+      result: [{},{}]
     };
-    
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
+    this.handleChangeH = this.handleChangeH.bind(this)
   }
+
+  result() {
+    const array = this.state.result
+    let array2 = []
+    for (let items of array) {
+      let hex = items.script_hex
+      if (hex){
+        let fromAsm = BITBOX.Script.fromASM(hex)
+        let decoded = BITBOX.Script.decode(fromAsm)
+        array2.push(decoded[0].toString('ascii'))
+      }
+    }
+    return (
+      <div>
+      {array2.map((list) => {
+        return (
+          <p>{list}</p>
+        )
+      })}
+      </div>
+    )
+   
+  }
+
+  async getWOTTxs() {
+    try {
+      let response = await fetch(`https://api.blockchair.com/bitcoin-cash/outputs?q=script_hex(^6a0400574f54)#`);
+      response = await response.json();
+      // console.log(response);
+      return response;
+    } catch (err) {
+      console.log(err);
+      console.warn(`Call to API was unsuccessful`);
+      return null;
+    }
+  }
+  
+  // const getWOTTxs = async (CID) => {
+  //   try {
+  //     let response = await fetch(`https://api.blockchair.com/bitcoin-cash/outputs?q=script_hex(^6a0400574f54${CID})#`);
+  //     response = await response.json();
+  //     // console.log(response);
+  //     return response;
+  //   } catch (err) {
+  //     console.log(err);
+  //     console.warn(`Call to API was unsuccessful`);
+  //     return null;
+  //   }
+  // };
   
 
   async getImageHash(result) {
@@ -103,35 +128,57 @@ class App extends Component {
       image2base64("./logo.png")
       .then(
           (response) => {
-              let imageHash = BITBOX.Crypto.sha256(response);
+            // image
+
+            let cID = this.state.value.toString()
+            let h = this.state.height.toString()
+
+            let buffImgHex = cID+h+response;
+
+              let imageHash = BITBOX.Crypto.ripemd160(buffImgHex);
               let buff = Buffer.from(imageHash);
-              let buffHex = '';
+
               for (let index = 0; index < buff.length; index++) {
                 // ugly hack
                 let i = buff[index].toString(16);
                 if (i<9) {
-                  buffHex = buffHex + '0' + i;
+                  buffImgHex = buffImgHex + '0' + i;
                 }
                 else {
-                  buffHex = buffHex + i;
+                  buffImgHex = buffImgHex + i;
                 }
               }
               this.setState({
-                imageHash: buffHex
+                imageHash: buffImgHex
               });
 
               let prefix = Buffer.from('00574f54', 'hex');
 
+              // entered value is in decimal and posted to the blockchain in hex
               let CID, buffCID;
               // for some reason CID can't be less than 16 or else becomes undefined
               if (this.state.value < 16) {
-                console.log(this.state.value)
                 CID = this.state.value
                 buffCID = new Buffer (CID);
               } else {
                 CID = parseInt(this.state.value).toString(16);
                 buffCID = Buffer.from(CID, 'hex');
               }
+
+              let H, buffH;
+              // for some reason CID can't be less than 16 or else becomes undefined
+              if (this.state.height < 16) {
+                H = this.state.height
+                buffH = new Buffer (H);
+              } else {
+                H = parseInt(this.state.value).toString(16);
+                buffH = Buffer.from(H, 'hex');
+              }
+
+              console.log(prefix)
+              console.log(buffCID)
+              console.log(buffH)
+              console.log(buff)
 
               // create array w/ OP_RETURN code and text buffer and encode
               let data = BITBOX.Script.encode([
@@ -188,10 +235,10 @@ class App extends Component {
               }
               console.log(addresses);
           }
-      ).then(function() {
-        getWOTTxs().then(function(result){
-          console.log(result.data);
-        })
+      ).then(async(result) => {
+        const data = await this.getWOTTxs(result)
+        console.log(data)
+        this.setState({result: data.data})
       })
       // .catch(
       //     (error) => {
@@ -218,6 +265,9 @@ class App extends Component {
 
   handleChange(event) {
     this.setState({value: event.target.value});
+  }
+  handleChangeH(event) {
+    this.setState({height: event.target.value});
   }
 
   handleSubmit(event) {
@@ -246,22 +296,31 @@ class App extends Component {
         <div className="App-content">
           <form onSubmit={this.handleSubmit}>
             <label>
-              ChainID:
-              <input type="text" value={this.state.value} onChange={this.handleChange} />
+              <input type="text" value={this.state.value} onChange={this.handleChange} placeholder="ChainID"/>
+              <input type="text" value={this.state.height} onChange={this.handleChangeH} placeholder="Height"/>
             </label>
             <input type="submit" value="Submit" />
           </form>
           <h2>BIP44 $BCH Wallet</h2>
           <h3>256 bit BIP39 Mnemonic:</h3> <p>{this.state.mnemonic}</p>
 
-          <h3>Output image hash in hex</h3>
+          <h3>Output image hash in hex:</h3>
           <p>{this.state.imageHash}</p>
 
           {/* <h3>Output transaction raw hex</h3>
           <p>{this.state.hex}</p> */}
 
-          <h3>Output transaction ID</h3>
+          <h3>Output transaction ID:</h3>
           <p>{this.state.txid}</p>
+
+          <h3>List of WOT transactions:</h3>
+          {/* {this.state.result.map((list) => {
+          return (
+              <p>{list.block_id}</p>
+            )
+          })} */}
+          {this.result()}
+         
         </div>
       </div>
     );
