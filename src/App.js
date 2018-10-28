@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import 'bootstrap/dist/css/bootstrap.css';
 import { Button, Container, Row, Col } from 'reactstrap';
+import './landing.css'
 // import StackGrid, { transitions } from "react-stack-grid";
 import ViewImages  from './viewImages'
 import ImageUpload from './imageUpload'
