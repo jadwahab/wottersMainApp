@@ -79,8 +79,6 @@ class ViewUpload extends Component {
 
     return (
         <div>
-          
-            
             <title>W3.CSS Template</title>
             <meta charSet="UTF-8" />  
             <meta name="viewport" content="width=device-width, initial-scale=1" />

@@ -1,26 +1,16 @@
 import React, { Component } from "react";
+import fetch from 'isomorphic-fetch';
 import logo from "./logo.png";
 
 import "./App.css";
+
+const image2base64 = require('image-to-base64');
+
 let BITBOXSDK = require("bitbox-sdk/lib/bitbox-sdk").default;
 let BITBOX = new BITBOXSDK({
   // restURL: 'https://rest.bitcoin.com/v1/' // -> change to mainnet
   restURL: 'https://trest.bitcoin.com/v1/'
 });
-
-/* --> remove different languages
-let langs = [
-  "english",
-  "chinese_simplified",
-  "chinese_traditional",
-  "korean",
-  "japanese",
-  "french",
-  "italian",
-  "spanish"
-];
-let lang = langs[Math.floor(Math.random() * langs.length)];
-*/
 
 // create 256 bit BIP39 mnemonic
 // let mnemonic = BITBOX.Mnemonic.generate(256, BITBOX.Mnemonic.wordLists()[lang]); --> remove different languages
@@ -42,112 +32,170 @@ let change = BITBOX.HDNode.derivePath(account, "0/0");
 // get the cash address
 let cashAddress = BITBOX.HDNode.toCashAddress(change);
 
+const getWOTTxs = async () => {
+  try {
+    let response = await fetch(`https://api.blockchair.com/bitcoin-cash/outputs?q=script_hex(^6a0400574f54)#`);
+    response = await response.json();
+    // console.log(response);
+    return response;
+  } catch (err) {
+    console.log(err);
+    console.warn(`Call to API was unsuccessful`);
+    return null;
+  }
+};
+
+
 class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
+      value: '',
       mnemonic: mnemonic,
-      // lang: lang, --> remove different languages
       hex: "",
-      txid: ""
+      txid: "",
+      imageHash: ""
     };
+    
+    this.handleChange = this.handleChange.bind(this);
+    this.handleSubmit = this.handleSubmit.bind(this);
   }
+  
 
-  componentDidMount() {
+  async getImageHash(result) {
+    // instance of transaction builder
+    // let transactionBuilder = new BITBOX.TransactionBuilder("bitcoincash"); // -> change to mainnet
+    let transactionBuilder = new BITBOX.TransactionBuilder("testnet");
+    // original amount of satoshis in vin
+    let originalAmount = result[0].satoshis;
+
+    // index of vout
+    let vout = result[0].vout;
+    
+    // txid of vout
+    let txid = result[0].txid;
+
+    // add input with txid and index of vout
+    transactionBuilder.addInput(txid, vout);
+
+    // get byte count to calculate fee. paying 1 sat/byte
+    let byteCount = BITBOX.BitcoinCash.getByteCount(
+      { P2PKH: 1 },
+      { P2PKH: 3 }
+    );
+    // 192
+    // amount to send to receiver. It's the original amount - 1 sat/byte for tx size
+    let sendAmount = originalAmount - byteCount;
+
+
+      image2base64("./logo.png")
+      .then(
+          (response) => {
+              let imageHash = BITBOX.Crypto.sha256(response);
+              let buff = Buffer.from(imageHash);
+              let buffHex = '';
+              for (let index = 0; index < buff.length; index++) {
+                // ugly hack
+                let i = buff[index].toString(16);
+                if (i<9) {
+                  buffHex = buffHex + '0' + i;
+                }
+                else {
+                  buffHex = buffHex + i;
+                }
+              }
+              this.setState({
+                imageHash: buffHex
+              });
+
+              let prefix = Buffer.from('00574f54', 'hex');
+
+              // for some reason CID can't be less than 16
+              // if (CID < 16) {
+                
+              // } else {
+                
+              // }
+              let CID = parseInt(this.state.value).toString(16);
+              console.log("CID")
+              console.log(typeof CID)
+              let buffCID = Buffer.from(CID, 'hex');
+              console.log(buffCID)
+
+              // create array w/ OP_RETURN code and text buffer and encode
+              let data = BITBOX.Script.encode([
+              BITBOX.Script.opcodes.OP_RETURN,
+              prefix,
+              buffCID,
+              buff
+              ])
+
+              // add encoded data as output and send 0 satoshis
+              transactionBuilder.addOutput(data, 0);
+              transactionBuilder.addOutput(cashAddress, sendAmount);
+              console.log("Satoshis spent: " + byteCount);
+
+              // keypair
+              let keyPair = BITBOX.HDNode.toKeyPair(change);
+
+              // sign w/ HDNode
+              let redeemScript;
+              transactionBuilder.sign(
+                0,
+                keyPair,
+                redeemScript,
+                transactionBuilder.hashTypes.SIGHASH_ALL,
+                originalAmount
+              );
+
+              // build tx
+              let tx = transactionBuilder.build();
+              // output rawhex
+              let hex = tx.toHex();
+              this.setState({
+                hex: hex
+              });
+
+              // sendRawTransaction to running BCH node
+              BITBOX.RawTransactions.sendRawTransaction(hex).then(
+                result => {
+                  this.setState({
+                    txid: result
+                  });
+                },
+                err => {
+                  console.log(err);
+                }
+              );
+
+              console.log(`BIP44 Account: m/44'/145'/0'`);
+              console.log(`BIP44 external change addresses:`);
+              let addresses = [];
+              for (let i = 0; i < 10; i++) {
+                let account = masterHDNode.derivePath(`m/44'/145'/0'/0/${i}`);
+                addresses.push(BITBOX.HDNode.toCashAddress(account));
+              }
+              console.log(addresses);
+          }
+      )
+      .catch(
+          (error) => {
+              console.log(error); //Exepection error....
+          }
+      )
+    }
+
+  async componentDidMount() {
     BITBOX.Address.utxo(cashAddress).then(
-      result => {
+      async (result) => {
         if (!result[0]) {
           return;
         }
-
         // console.log(result);
         // return false;
 
-        // instance of transaction builder
-        // let transactionBuilder = new BITBOX.TransactionBuilder("bitcoincash"); // -> change to mainnet
-        let transactionBuilder = new BITBOX.TransactionBuilder("testnet");
-        // original amount of satoshis in vin
-        let originalAmount = result[0].satoshis;
-
-        // index of vout
-        let vout = result[0].vout;
         
-        // txid of vout
-        let txid = result[0].txid;
-
-        // add input with txid and index of vout
-        transactionBuilder.addInput(txid, vout);
-
-        // get byte count to calculate fee. paying 1 sat/byte
-        let byteCount = BITBOX.BitcoinCash.getByteCount(
-          { P2PKH: 1 },
-          { P2PKH: 3 }
-        );
-        // 192
-        // amount to send to receiver. It's the original amount - 1 sat/byte for tx size
-        let sendAmount = originalAmount - byteCount;
-
-
-        /* -> send to change address
-        // add output w/ address and amount to send
-        transactionBuilder.addOutput(cashAddress, sendAmount);
-        */
-     
-        // OP_RETURN DATA
-        // encode some text as a buffer
-        let buf = new Buffer('BCHDEVON WINNERS: WOTTERS');
-        // create array w/ OP_RETURN code and text buffer and encode
-        let data = BITBOX.Script.encode([
-        BITBOX.Script.opcodes.OP_RETURN,
-        Buffer.from('00574f54', 'hex'),
-        buf
-        ])
-        // add encoded data as output and send 0 satoshis
-        transactionBuilder.addOutput(data, 0);
-        transactionBuilder.addOutput(cashAddress, sendAmount);
-        console.log("Satoshis spent: " + byteCount);
-
-        // keypair
-        let keyPair = BITBOX.HDNode.toKeyPair(change);
-
-        // sign w/ HDNode
-        let redeemScript;
-        transactionBuilder.sign(
-          0,
-          keyPair,
-          redeemScript,
-          transactionBuilder.hashTypes.SIGHASH_ALL,
-          originalAmount
-        );
-
-        // build tx
-        let tx = transactionBuilder.build();
-        // output rawhex
-        let hex = tx.toHex();
-        this.setState({
-          hex: hex
-        });
-
-        // sendRawTransaction to running BCH node
-        BITBOX.RawTransactions.sendRawTransaction(hex).then(
-          result => {
-            this.setState({
-              txid: result
-            });
-          },
-          err => {
-            console.log(err);
-          }
-        );
-
-        console.log(`BIP44 Account: m/44'/145'/0'`);
-        console.log(`BIP44 external change addresses:`);
-        let addresses = [];
-        for (let i = 0; i < 10; i++) {
-          let account = masterHDNode.derivePath(`m/44'/145'/0'/0/${i}`);
-          addresses.push(BITBOX.HDNode.toCashAddress(account));
-        }
-        console.log(addresses);
+        // await this.getImageHash(result)
       },
       err => {
         console.log(err);
@@ -155,19 +203,50 @@ class App extends Component {
     );
   }
 
+  handleChange(event) {
+    this.setState({value: event.target.value});
+  }
+
+  handleSubmit(event) {
+    // alert('A name was submitted: ' + this.state.value);
+    BITBOX.Address.utxo(cashAddress).then(
+        async (result) => {
+          if (!result[0]) {
+            return;
+          } 
+          
+          await this.getImageHash(result, this.state.value)
+        },
+        err => {
+          console.log(err);
+        }
+      );
+    event.preventDefault();
+  }
+
   render() {
     return (
       <div className="App">
         <header className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
           <h1 className="App-title">WOTTERS</h1>
         </header>
         <div className="App-content">
+          <form onSubmit={this.handleSubmit}>
+            <label>
+              ChainID:
+              <input type="text" value={this.state.value} onChange={this.handleChange} />
+            </label>
+            <input type="submit" value="Submit" />
+          </form>
           <h2>BIP44 $BCH Wallet</h2>
           <h3>256 bit BIP39 Mnemonic:</h3> <p>{this.state.mnemonic}</p>
 
-          <h3>Output transaction raw hex</h3>
-          <p>{this.state.hex}</p>
+          <h3>Output image hash in hex</h3>
+          <p>{this.state.imageHash}</p>
+
+          {/* <h3>Output transaction raw hex</h3>
+          <p>{this.state.hex}</p> */}
+
           <h3>Output transaction ID</h3>
           <p>{this.state.txid}</p>
         </div>
