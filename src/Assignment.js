@@ -74,23 +74,22 @@ const gestures = [
 	"hold a bag in the left hand",
 ];
 
-class Assignment {
-	getColor(ordinal) {
+	function getColor(ordinal) {
 		return colors[ordinal];
-	}
+	};
 	
-	getSymbol(ordinal) {
+	function getSymbol(ordinal) {
 		if(ordinal > symbols.length) {
 			ordinal = symbols.length;
 		}
 		return symbols[ordinal];
-	}
+	};
 	
-	getGesture(ordinal) {
+	function getGesture(ordinal) {
 		return gestures[ordinal];
-	}
+	};
     
-    updateChallenge(hash, difficulty=1) {
+	export function updateChallenge(hash, difficulty) {
     	if(difficulty < 1) {
     		difficulty = 1;
     	}
@@ -109,15 +108,14 @@ class Assignment {
     	
     	let symbol = ""
     	let color = ""
-    	let challenge = this.getGesture(parseInt(hash.substring(0,2), 16) % difficultyModulo);
+    	let challenge = getGesture(parseInt(hash.substring(0,2), 16) % difficultyModulo);
     	
     	var i;    	
     	for(i = 0; (i < difficulty) && (i < symbols.length); i++) {
-    		color	= this.getColor(parseInt(hash[2 * i], 16) % colors.length);
-    		symbol	= this.getSymbol(i);
+    		color	= getColor(parseInt(hash[2 * i], 16) % colors.length);
+    		symbol	= getSymbol(i);
     		challenge += ", " + color + " " + symbol;
     	}
     	
     	return challenge.charAt(0).toUpperCase() + challenge.slice(1);
     }
-}

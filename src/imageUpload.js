@@ -1,8 +1,9 @@
 import React, { Component } from 'react'
 import './imageUpload.css'
-import { Row, Col } from 'reactstrap';
+import { Row, Col, Image } from 'reactstrap';
 import { Base64 } from 'js-base64';
 import {createBlobServiceWithSas} from './libs/azure'
+import App from './bitboxFunc'
 const image2base64 = require('image-to-base64');
 
 
@@ -83,17 +84,17 @@ class ViewUpload extends Component {
             <meta charSet="UTF-8" />  
             <meta name="viewport" content="width=device-width, initial-scale=1" />
             <link rel="stylesheet" href="./css/styles.css" />
+ 
             <Row>
-            <Col xs="6" sm="4"></Col>
-                <Col xs="6" sm="4">
-                <h2>Challange</h2>
-                <p>Left hand touches your tongue</p>
-                </Col>
-            <Col xs="6" sm="4"></Col>
-            </Row>
-            <Row>
-            <Col xs="6" sm="4"></Col>
-                <Col xs="6" sm="4">
+            <Col xs="4" sm="4">
+                <App />
+            </Col>
+        
+
+            <Col xs="4" sm="4">
+            {/* <img src="https://wotters.blob.core.windows.net/images/AAAA.jpg" width='200px' alt="Italian Trulli"></img> */}
+            {/* <img scr='' /> */}
+                {/* <Col xs="6" sm="4"> */}
                 <div className="file-upload">
             {/* <button className="file-add-btn" type="button" >Add Image</button> */}
             <div className="image-upload-wrap">
@@ -119,10 +120,10 @@ class ViewUpload extends Component {
             </div> */}
             <div id="list_images" />
 
+</Col>
 
-
-                </Col>
-            <Col xs="6" sm="4"></Col>
+                {/* </Col> */}
+            {/* <Col xs="6" sm="4"></Col> */}
             </Row>
         
       </div>

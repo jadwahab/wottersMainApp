@@ -44,12 +44,12 @@ class ViewImages extends Component {
 
   onYes(hash) {
     console.log('clicked')
-    window.open('/users','_self')
+    window.open('/about','_self')
   }
 
   onNo() {
     console.log('click no')
-    window.open('/users','_self')
+    window.open('/about','_self')
   }
 
 

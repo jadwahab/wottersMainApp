@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import fetch from 'isomorphic-fetch';
+import { updateChallenge } from './Assignment';
 
 import "./App.css";
 
@@ -7,8 +8,8 @@ const image2base64 = require('image-to-base64');
 
 let BITBOXSDK = require("bitbox-sdk/lib/bitbox-sdk").default;
 let BITBOX = new BITBOXSDK({
-  // restURL: 'https://rest.bitcoin.com/v1/' // -> change to mainnet
-  restURL: 'https://trest.bitcoin.com/v1/'
+  restURL: 'https://rest.bitcoin.com/v1/' // -> change to mainnet
+  // restURL: 'https://trest.bitcoin.com/v1/'
 });
 
 // create 256 bit BIP39 mnemonic
@@ -19,8 +20,8 @@ let mnemonic = "abuse river unaware denial lake wagon slice rigid airport pool s
 let rootSeed = BITBOX.Mnemonic.toSeed(mnemonic);
 
 // master HDNode
-// let masterHDNode = BITBOX.HDNode.fromSeed(rootSeed, "bitcoincash"); // -> change to mainnet
-let masterHDNode = BITBOX.HDNode.fromSeed(rootSeed, "testnet"); 
+let masterHDNode = BITBOX.HDNode.fromSeed(rootSeed, "bitcoincash"); // -> change to mainnet
+// let masterHDNode = BITBOX.HDNode.fromSeed(rootSeed, "testnet"); 
 
 // HDNode of BIP44 account
 let account = BITBOX.HDNode.derivePath(masterHDNode, "m/44'/145'/0'");
@@ -30,6 +31,18 @@ let change = BITBOX.HDNode.derivePath(account, "0/0");
 
 // get the cash address
 let cashAddress = BITBOX.HDNode.toCashAddress(change);
+
+String.prototype.hexEncode = function(){
+  var hex, i;
+
+  var result = "";
+  for (i=0; i<this.length; i++) {
+      hex = this.charCodeAt(i).toString(16);
+      result += ("000"+hex).slice(-4);
+  }
+
+  return result
+}
 
 
 class App extends Component {
@@ -42,7 +55,8 @@ class App extends Component {
       hex: "",
       txid: "",
       imageHash: "",
-      result: [{},{}]
+      result: [{},{}],
+      challenge: ""
     };
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
@@ -101,8 +115,8 @@ class App extends Component {
 
   async getImageHash(result) {
     // instance of transaction builder
-    // let transactionBuilder = new BITBOX.TransactionBuilder("bitcoincash"); // -> change to mainnet
-    let transactionBuilder = new BITBOX.TransactionBuilder("testnet");
+    let transactionBuilder = new BITBOX.TransactionBuilder("bitcoincash"); // -> change to mainnet
+    // let transactionBuilder = new BITBOX.TransactionBuilder("testnet");
     // original amount of satoshis in vin
     let originalAmount = result[0].satoshis;
 
@@ -136,6 +150,13 @@ class App extends Component {
             let buffImgHex = cID+h+response;
 
               let imageHash = BITBOX.Crypto.ripemd160(buffImgHex);
+              console.log(imageHash.toString().hexEncode());
+
+              // GET CHALLENGE
+              let challenge = updateChallenge(imageHash.toString().hexEncode(), 1);
+
+              this.setState({ challenge }); 
+
               let buff = Buffer.from(imageHash);
 
               for (let index = 0; index < buff.length; index++) {
@@ -301,8 +322,12 @@ class App extends Component {
             </label>
             <input type="submit" value="Submit" />
           </form>
-          <h2>BIP44 $BCH Wallet</h2>
-          <h3>256 bit BIP39 Mnemonic:</h3> <p>{this.state.mnemonic}</p>
+          
+          {/* <h2>BIP44 $BCH Wallet</h2>
+          <h3>256 bit BIP39 Mnemonic:</h3> <p>{this.state.mnemonic}</p> */}
+
+          <h3>CHALLENGE:</h3>
+          <p>{this.state.challenge}</p>
 
           <h3>Output image hash in hex:</h3>
           <p>{this.state.imageHash}</p>
@@ -314,11 +339,6 @@ class App extends Component {
           <p>{this.state.txid}</p>
 
           <h3>List of WOT transactions:</h3>
-          {/* {this.state.result.map((list) => {
-          return (
-              <p>{list.block_id}</p>
-            )
-          })} */}
           {this.result()}
          
         </div>
